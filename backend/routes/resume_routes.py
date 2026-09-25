@@ -17,6 +17,7 @@ UPLOAD_FOLDER = os.path.join(
     os.path.dirname(os.path.dirname(__file__)),
     "uploads"
 )
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
 def allowed_file(filename):
