@@ -3,14 +3,10 @@ import re
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-from sentence_transformers import SentenceTransformer
-
-
-# Load semantic similarity model
-model = SentenceTransformer("all-MiniLM-L6-v2")
-
 
 def clean_text(text):
+    if not text:
+        return ""
 
     text = text.lower()
 
@@ -34,7 +30,6 @@ def calculate_keyword_score(question, answer):
     )
 
     if not question_words:
-
         return 0.0
 
     matched_words = (
@@ -51,53 +46,55 @@ def calculate_keyword_score(question, answer):
 
 def calculate_relevance_score(question, answer):
 
+    question = clean_text(question)
+    answer = clean_text(answer)
+
+    if not question or not answer:
+        return 0.0
+
     vectorizer = TfidfVectorizer()
 
-    vectors = vectorizer.fit_transform(
-        [
-            clean_text(question),
-            clean_text(answer)
-        ]
-    )
+    try:
+        vectors = vectorizer.fit_transform(
+            [question, answer]
+        )
 
-    similarity = cosine_similarity(
-        vectors[0:1],
-        vectors[1:2]
-    )[0][0]
+        similarity = cosine_similarity(
+            vectors[0:1],
+            vectors[1:2]
+        )[0][0]
 
-    return round(
-        float(similarity * 100),
-        2
-    )
+        return round(
+            float(similarity * 100),
+            2
+        )
+
+    except Exception:
+        return 0.0
 
 
 def calculate_semantic_score(question, answer):
 
-    embeddings = model.encode(
-        [
-            question,
-            answer
-        ]
-    )
+    """
+    Lightweight semantic similarity.
 
-    similarity = cosine_similarity(
-        [embeddings[0]],
-        [embeddings[1]]
-    )[0][0]
+    Uses TF-IDF similarity instead of SentenceTransformer.
+    This avoids loading PyTorch and a large transformer model,
+    which is important for low-memory deployment.
+    """
 
-    return round(
-        float(similarity * 100),
-        2
+    return calculate_relevance_score(
+        question,
+        answer
     )
 
 
 def calculate_clarity_score(answer):
 
-    words = answer.split()
-
-    if not words:
-
+    if not answer or not answer.strip():
         return 0.0
+
+    words = answer.split()
 
     word_count = len(words)
 
@@ -115,14 +112,12 @@ def calculate_clarity_score(answer):
     sentence_count = len(sentences)
 
     if sentence_count == 0:
-
         sentence_count = 1
 
     average_sentence_length = (
         word_count / sentence_count
     )
 
-    # Reasonable interview answer length
     if 8 <= average_sentence_length <= 25:
 
         score = 100
@@ -154,9 +149,9 @@ def calculate_overall_score(
 ):
 
     overall_score = (
-        float(relevance_score)* 0.25
-        + float(keyword_score )* 0.20
-        + float(semantic_score)* 0.40
+        float(relevance_score) * 0.25
+        + float(keyword_score) * 0.20
+        + float(semantic_score) * 0.40
         + float(clarity_score) * 0.15
     )
 
@@ -166,9 +161,7 @@ def calculate_overall_score(
     )
 
 
-def generate_feedback(
-    overall_score
-):
+def generate_feedback(overall_score):
 
     if overall_score >= 85:
 

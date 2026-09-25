@@ -2,8 +2,8 @@ from flask import Blueprint, request
 
 from database.connection import get_db_connection
 from utils.response import success_response, error_response
-from nlp.question_generator import generate_questions
-from nlp.answer_evaluator import evaluate_answer
+
+
 interview_bp = Blueprint("interview_bp", __name__)
 
 
@@ -362,7 +362,7 @@ def generate_interview_questions(interview_id):
                 "No skills found for this resume. Extract skills first.",
                 400
             )
-
+        from nlp.question_generator import generate_questions
         # Generate questions
         questions = generate_questions(
             resume_text,
@@ -756,7 +756,7 @@ def evaluate_question_answer(question_id):
                 "No answer submitted for this question",
                 404
             )
-
+        from nlp.answer_evaluator import evaluate_answer
         # NLP evaluation
         evaluation = evaluate_answer(
             question["question_text"],
