@@ -1,0 +1,29 @@
+services:
+  - type: pserv
+    name: ai-interview-mysql
+    plan: standard
+    env: docker
+    autoDeploy: false
+
+    disk:
+      name: mysql-data
+      mountPath: /var/lib/mysql
+      sizeGB: 10
+
+    envVars:
+      - fromGroup: ai-interview-mysql-env
+
+envVarGroups:
+  - name: ai-interview-mysql-env
+    envVars:
+      - key: MYSQL_DATABASE
+        value: ai_interview_coach
+
+      - key: MYSQL_USER
+        value: interview_user
+
+      - key: MYSQL_PASSWORD
+        generateValue: true
+
+      - key: MYSQL_ROOT_PASSWORD
+        generateValue: true
